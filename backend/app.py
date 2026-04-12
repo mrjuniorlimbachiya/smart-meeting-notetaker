@@ -9,6 +9,7 @@ from flask_cors import CORS
 from audio_capture import start_recording, stop_recording
 from transcriber import transcribe_audio
 from summariser import summarise_transcript
+from insights import generate_insights
 
 QNN_HTP_PATH = onnxruntime_qnn.get_qnn_htp_path()
 
@@ -48,6 +49,18 @@ def summarise():
     transcript = data.get('transcript', '')
     result = summarise_transcript(transcript)
     return jsonify(result)
+
+@app.route('/insights', methods=['POST'])
+def insights():
+    data = request.get_json()
+    result = generate_insights(data)
+    return jsonify(result)
+
+@app.route('/insights/<path:filename>')
+def serve_insight(filename):
+    return send_from_directory(
+        os.path.join(BASE_DIR, 'static', 'insights'), filename
+    )
 
 if __name__ == '__main__':
     threading.Timer(1.5, lambda: webbrowser.open('http://localhost:5000')).start()

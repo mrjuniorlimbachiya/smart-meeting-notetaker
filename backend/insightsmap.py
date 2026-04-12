@@ -52,7 +52,7 @@ matplotlib.use("Agg")           # non-interactive backend — no display needed
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
-
+from insights import generate_insights
 # ─────────────────────────────────────────────────────────────
 # Paths
 # ─────────────────────────────────────────────────────────────
