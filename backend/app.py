@@ -9,7 +9,7 @@ from flask_cors import CORS
 from audio_capture import start_recording, stop_recording
 from transcriber import transcribe_audio
 from summariser import summarise_transcript
-from insights import generate_insights
+from insightsmap import generate_insights
 
 QNN_HTP_PATH = onnxruntime_qnn.get_qnn_htp_path()
 
