@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NoteFlow — Smart Meeting Notes • Edge AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-light: #f6f9fc;
+      --surface-white: #ffffff;
+      --surface-soft: #fefefe;
+      --card-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.02);
+      --card-shadow-hover: 0 30px 45px -15px rgba(0, 0, 0, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.03);
+      --border-light: rgba(0, 0, 0, 0.06);
+      --border-glow: rgba(100, 108, 255, 0.2);
+      --text-primary: #0e1c2c;
+      --text-secondary: #5b6e8c;
+      --text-tertiary: #8a99b4;
+      --accent: #6366f1;
+      --accent-soft: #e0e7ff;
+      --accent-glow: rgba(99, 102, 241, 0.35);
+      --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+      --red: #f43f5e;
+      --red-soft: #ffe4e6;
+      --blue: #3b82f6;
+      --blue-soft: #dbeafe;
+      --green: #10b981;
+      --green-soft: #d1fae5;
+      --amber: #f59e0b;
+      --font-heading: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background: var(--bg-light);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.5;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    /* custom cursor & animated gradient overlay */
+    .custom-cursor {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.12s ease, width 0.2s, height 0.2s, background 0.2s;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 12px var(--accent-glow);
+      backdrop-filter: blur(2px);
+    }
+
+    /* animated background blob */
+    .blob-bg {
+      position: fixed;
+      top: -20%;
+      right: -15%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, rgba(139,92,246,0.05) 70%, transparent 100%);
+      border-radius: 50%;
+      filter: blur(70px);
+      z-index: 0;
+      pointer-events: none;
+      animation: floatBlob 18s infinite alternate ease-in-out;
+    }
+    .blob-bg-2 {
+      bottom: -10%;
+      left: -10%;
+      width: 550px;
+      height: 550px;
+      background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, rgba(59,130,246,0.03) 80%);
+      filter: blur(80px);
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: floatBlob2 24s infinite alternate;
+    }
+    @keyframes floatBlob {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, 60px) scale(1.2); }
+    }
+    @keyframes floatBlob2 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-30px, -40px) scale(1.3); }
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 28px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* header */
+    header {
+      padding: 32px 0 24px;
+      margin-bottom: 28px;
+      backdrop-filter: blur(8px);
+      background: rgba(246, 249, 252, 0.7);
+      border-radius: 0 0 32px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: all 0.3s;
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      transition: transform 0.2s;
+    }
+    .logo-name {
+      font-family: var(--font-heading);
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--accent-gradient);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.02em;
+    }
+    .logo-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 4px 12px;
+      border-radius: 30px;
+      letter-spacing: 0.02em;
+    }
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--surface-white);
+      border: 1px solid var(--border-light);
+      padding: 8px 18px;
+      border-radius: 80px;
+      box-shadow: var(--card-shadow);
+      transition: all 0.25s;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      transition: all 0.2s;
+    }
+    .status-pill.ready .status-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .status-pill.recording .status-dot { background: var(--red); animation: pulseRed 1.2s infinite; }
+    .status-pill.loading .status-dot { background: var(--blue); animation: pulseBlue 1s infinite; }
+    @keyframes pulseRed { 0% { opacity: 0.4; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
+    @keyframes pulseBlue { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    /* cards & sections */
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .record-panel {
+      background: var(--surface-white);
+      border-radius: 28px;
+      padding: 32px 36px;
+      margin-bottom: 28px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid rgba(0,0,0,0.03);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+      transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+    .record-panel:hover { transform: translateY(-4px); box-shadow: var(--card-shadow-hover); border-color: var(--border-glow); }
+    .record-panel.is-recording { background: linear-gradient(145deg, #ffffff, #fff5f5); border-left: 4px solid var(--red); }
+    .record-title { font-family: var(--font-heading); font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+    .record-desc { font-size: 14px; color: var(--text-secondary); }
+    .timer { font-family: var(--font-mono); font-size: 38px; font-weight: 500; letter-spacing: 2px; background: #f1f5f9; padding: 6px 18px; border-radius: 60px; color: var(--text-primary); transition: 0.2s; }
+    .timer.active { background: var(--red-soft); color: var(--red); box-shadow: 0 0 10px rgba(244,63,94,0.2); }
+    .btn-record {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.2, 0.9, 0.5, 1.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      box-shadow: 0 8px 18px rgba(99,102,241,0.3);
+    }
+    .btn-record.start { background: var(--accent-gradient); }
+    .btn-record.stop { background: var(--red); box-shadow: 0 8px 20px rgba(244,63,94,0.4); }
+    .btn-record:hover { transform: scale(1.08); filter: brightness(1.02); }
+    .wave-container { display: flex; gap: 5px; margin-top: 12px; }
+    .wave-bar { background: var(--red); width: 4px; border-radius: 4px; animation: waveAnimate 0.8s infinite alternate; }
+    @keyframes waveAnimate { 0% { height: 6px; } 100% { height: 20px; } }
+
+    /* action cards row */
+    .workflow-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; margin-bottom: 32px; }
+    .action-card { background: var(--surface-white); border-radius: 24px; padding: 28px 24px; box-shadow: var(--card-shadow); transition: 0.25s; border: 1px solid rgba(0,0,0,0.02); }
+    .action-card:hover { transform: translateY(-6px); box-shadow: var(--card-shadow-hover); }
+    .workflow-arrow { font-size: 32px; color: var(--accent); opacity: 0.7; align-self: center; text-align: center; }
+    .btn-action { width: 100%; padding: 14px; border-radius: 60px; border: none; background: #f1f5f9; font-weight: 600; font-family: var(--font-heading); font-size: 15px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .btn-action.accent { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(99,102,241,0.2); }
+    .btn-action:hover:not(:disabled) { background: var(--accent); color: white; transform: scale(0.98); }
+    .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* transcript & notes */
+    .transcript-section, .notes-section { background: var(--surface-white); border-radius: 28px; margin-bottom: 28px; box-shadow: var(--card-shadow); transition: 0.2s; overflow: hidden; }
+    .transcript-box { width: 100%; min-height: 160px; border: none; padding: 28px; font-size: 15px; line-height: 1.65; background: transparent; font-family: var(--font-body); color: var(--text-primary); resize: vertical; outline: none; }
+    .notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .notes-block { padding: 28px; border-bottom: 1px solid var(--border-light); }
+    .notes-block.full-width { grid-column: 1 / -1; }
+    .notes-block-label { font-family: var(--font-mono); font-size: 12px; color: var(--accent); letter-spacing: 0.5px; margin-bottom: 14px; font-weight: 600; }
+    .notes-summary { font-size: 15px; background: #f8fafc; padding: 18px; border-radius: 20px; font-style: normal; line-height: 1.6; }
+    .notes-list li { margin-bottom: 10px; padding-left: 20px; position: relative; list-style: none; }
+    .notes-list li::before { content: "✦"; position: absolute; left: 0; color: var(--accent); font-size: 12px; }
+    .export-bar { background: var(--surface-white); border-radius: 80px; padding: 16px 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 48px; box-shadow: var(--card-shadow); }
+    .btn-export { padding: 10px 26px; border-radius: 40px; border: 1px solid var(--border-light); background: white; font-weight: 600; font-family: var(--font-heading); transition: all 0.2s; cursor: pointer; }
+    .btn-export:hover { background: var(--accent-soft); border-color: var(--accent); transform: translateY(-2px); }
+    footer { padding: 28px 0 40px; border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-secondary); }
+    .npu-badge { background: var(--accent-soft); padding: 5px 14px; border-radius: 50px; color: var(--accent); font-family: var(--font-mono); font-size: 10px; }
+
+    /* toast */
+    .toast-container { position: fixed; bottom: 24px; right: 28px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; }
+    .toast { background: white; border-radius: 60px; padding: 12px 22px; box-shadow: 0 12px 24px -12px rgba(0,0,0,0.2); border-left: 4px solid var(--accent); font-weight: 500; backdrop-filter: blur(4px); animation: slideFade 0.3s ease; }
+    .toast.success { border-left-color: var(--green); }
+    .toast.error { border-left-color: var(--red); }
+    @keyframes slideFade { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* scroll reveal */
+    .scroll-reveal { opacity: 0; transform: translateY(18px); transition: all 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1); }
+    .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 760px) {
+      .workflow-row { grid-template-columns: 1fr; gap: 16px; }
+      .workflow-arrow { display: none; }
+      .notes-grid { grid-template-columns: 1fr; }
+      .record-panel { flex-direction: column; align-items: flex-start; }
+      .timer { font-size: 28px; }
+      .custom-cursor { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="custom-cursor" id="customCursor"></div>
+<div class="blob-bg"></div>
+<div class="blob-bg-2"></div>
+
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-name">NoteFlow</span>
+        <span class="logo-tag">Edge AI</span>
+      </div>
+      <div class="status-pill loading" id="statusPill">
+        <div class="status-dot"></div>
+        <span id="statusText">Connecting...</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-reveal">
+    <div class="section-label">✨ Step 1 — Immersive Recording</div>
+    <div class="record-panel" id="recordPanel">
+      <div class="record-left">
+        <div class="record-title" id="recordTitle">Ready to capture</div>
+        <div class="record-desc" id="recordDesc">Start intelligent meeting capture with NPU acceleration</div>
+        <div class="wave-container" id="waveContainer" style="display: none;">
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        </div>
+      </div>
+      <div class="timer" id="timer">00:00</div>
+      <button class="btn-record start disabled" id="btnRecord" onclick="toggleRecording()">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="workflow-row scroll-reveal">
+    <div class="action-card">
+      <div class="section-label">🎙️ Step 2 — Transcribe</div>
+      <button class="btn-action" id="btnTranscribe" onclick="transcribe()" disabled>
+        <div class="spinner" style="display:none;"></div>
+        <span class="btn-label">⚡ Whisper NPU</span>
+      </button>
+    </div>
+    <div class="workflow-arrow">⟶</div>
+    <div class="action-card">
+      <div class="section-label">📝 Step 3 — Generate Notes</div>
+      <button class="btn-action accent" id="btnSummarise" onclick="summarise()" disabled>
+        <div class="spinner" style="display:none;"></div>
+        <span class="btn-label">✨ Phi-3 Insight</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="transcript-section scroll-reveal" id="transcriptSection">
+    <div class="section-header" style="display: flex; justify-content: space-between; padding: 20px 28px 0 28px;">
+      <div class="section-label" style="margin-bottom:0;">📄 Raw Transcript</div>
+      <div class="char-count" id="charCount" style="font-family: monospace;">0 words</div>
+    </div>
+    <textarea class="transcript-box" id="transcriptBox" placeholder="Your live transcript appears here after transcription. You can also edit or paste text directly — the NPU will process it seamlessly..." oninput="onTranscriptInput()"></textarea>
+  </div>
+
+  <div class="notes-section scroll-reveal" id="notesSection">
+    <div class="section-header" style="display: flex; justify-content: space-between; padding: 20px 28px 0 28px;">
+      <div class="section-label">🧠 Structured Meeting Notes</div>
+      <div class="char-count" id="notesStatus">—</div>
+    </div>
+    <div id="notesContent">
+      <div class="notes-empty" style="padding: 60px; text-align: center; color: var(--text-tertiary);">✨ Click "Generate Notes" to turn insights into structured magic</div>
+    </div>
+  </div>
+
+  <div class="export-bar scroll-reveal">
+    <div class="export-info">📎 Export polished notes as <strong>.txt</strong> or <strong>.md</strong></div>
+    <div class="export-buttons"><button class="btn-export" id="btnExportTxt" onclick="exportFile('txt')" disabled>📄 .txt</button><button class="btn-export" id="btnExportMd" onclick="exportFile('md')" disabled>📘 .md</button></div>
+  </div>
+
+  <footer>
+    <div class="footer-left">⚡ Snapdragon AI Unplugged 2026 — On-Device Intelligence</div>
+    <div class="footer-right"><span class="npu-badge">🔮 Snapdragon X Elite • ONNX QNN EP</span></div>
+  </footer>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  const BASE_URL = 'http://localhost:5000';
+  let appState = { modelsReady: false, isRecording: false, hasSavedRecording: false, transcript: '', notes: null, timerInterval: null, seconds: 0 };
+  function toast(msg, type = 'info', duration = 3000) {
+    const el = document.createElement('div'); el.className = `toast ${type}`; el.textContent = msg;
+    document.getElementById('toastContainer').appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(30px)'; setTimeout(() => el.remove(), 300); }, duration);
+  }
+  function setStatus(state, text) { const pill = document.getElementById('statusPill'), label = document.getElementById('statusText'); pill.className = 'status-pill ' + state; label.textContent = text; }
+  function startTimer() { appState.seconds = 0; clearInterval(appState.timerInterval); appState.timerInterval = setInterval(() => { appState.seconds++; const m = String(Math.floor(appState.seconds / 60)).padStart(2,'0'), s = String(appState.seconds % 60).padStart(2,'0'); document.getElementById('timer').textContent = m+':'+s; document.getElementById('timer').classList.add('active'); }, 1000); }
+  function stopTimer() { clearInterval(appState.timerInterval); document.getElementById('timer').classList.remove('active'); }
+  function onTranscriptInput() { const val = document.getElementById('transcriptBox').value.trim(); appState.transcript = val; const words = val ? val.split(/\s+/).length : 0; document.getElementById('charCount').textContent = words + ' word' + (words !== 1 ? 's' : ''); const section = document.getElementById('transcriptSection'); if (val) section.classList.add('has-content'); document.getElementById('btnSummarise').disabled = !val; }
+  async function apiFetch(endpoint, options = {}) { const res = await fetch(BASE_URL + endpoint, { headers: { 'Content-Type': 'application/json' }, ...options }); if (!res.ok) throw new Error('Server error ' + res.status); return res.json(); }
+  async function checkStatus() { setStatus('loading', 'Loading models...'); try { const data = await apiFetch('/status'); if (data.ready) { appState.modelsReady = true; setStatus('ready', 'Models ready'); document.getElementById('btnRecord').classList.remove('disabled'); toast('✅ Models loaded. Ready to record.', 'success'); } else { setTimeout(checkStatus, 3000); } } catch (e) { setStatus('loading', 'Backend connecting...'); setTimeout(checkStatus, 4000); } }
+  async function toggleRecording() {
+    if (!appState.modelsReady) return;
+    if (!appState.isRecording) {
+      try { await apiFetch('/record/start', { method: 'POST' }); appState.isRecording = true; const btn = document.getElementById('btnRecord'); btn.className = 'btn-record stop'; btn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="6" y="6" width="12" height="12" rx="3"/></svg>`; document.getElementById('recordPanel').classList.add('is-recording'); document.getElementById('recordTitle').textContent = '🔴 Recording meeting...'; document.getElementById('recordDesc').textContent = 'Press stop when discussion ends'; const wave = document.getElementById('waveContainer'); wave.style.display = 'flex'; document.getElementById('btnTranscribe').disabled = true; setStatus('recording', 'Recording'); startTimer(); toast('🎙️ Recording started', 'success'); } catch(e) { toast('Failed to start recording: ' + e.message, 'error'); }
+    } else {
+      try { await apiFetch('/record/stop', { method: 'POST' }); appState.isRecording = false; appState.hasSavedRecording = true; const btn = document.getElementById('btnRecord'); btn.className = 'btn-record start'; btn.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>`; document.getElementById('recordPanel').classList.remove('is-recording'); document.getElementById('recordTitle').textContent = 'Recording saved'; document.getElementById('recordDesc').textContent = 'Click Transcribe Audio to process meeting'; document.getElementById('waveContainer').style.display = 'none'; document.getElementById('btnTranscribe').disabled = false; setStatus('ready', 'Models ready'); stopTimer(); toast('✅ Recording saved. Ready to transcribe.', 'success'); } catch(e) { toast('Stop failed: ' + e.message, 'error'); }
+    }
+  }
+  async function transcribe() { const btn = document.getElementById('btnTranscribe'); btn.classList.add('loading'); btn.disabled = true; const spinner = btn.querySelector('.spinner'); if(spinner) spinner.style.display = 'inline-block'; setStatus('loading', 'Transcribing...'); toast('🎤 Transcribing via Whisper NPU ...', 'info', 4000); try { const data = await apiFetch('/transcribe', { method: 'POST' }); document.getElementById('transcriptBox').value = data.transcript; appState.transcript = data.transcript; onTranscriptInput(); setStatus('ready', 'Models ready'); toast('📝 Transcription complete', 'success'); } catch(e) { setStatus('ready', 'Models ready'); toast('Transcription failed: ' + e.message, 'error'); } finally { btn.classList.remove('loading'); if(spinner) spinner.style.display = 'none'; btn.disabled = false; } }
+  async function summarise() { const transcript = document.getElementById('transcriptBox').value.trim(); if (!transcript) { toast('No transcript to summarise', 'error'); return; } const btn = document.getElementById('btnSummarise'); btn.classList.add('loading'); btn.disabled = true; const spinner = btn.querySelector('.spinner'); if(spinner) spinner.style.display = 'inline-block'; setStatus('loading', 'Generating smart notes...'); document.getElementById('notesStatus').textContent = '🧠 Generating...'; toast('✨ Phi-3 generating structured notes on NPU...', 'info', 6000); try { const data = await apiFetch('/summarise', { method: 'POST', body: JSON.stringify({ transcript }) }); appState.notes = data; renderNotes(data); setStatus('ready', 'Models ready'); document.getElementById('notesStatus').textContent = 'Ready'; document.getElementById('btnExportTxt').disabled = false; document.getElementById('btnExportMd').disabled = false; toast('🎉 Notes generated successfully', 'success'); } catch(e) { setStatus('ready', 'Models ready'); document.getElementById('notesStatus').textContent = 'Error'; toast('Summarisation failed: ' + e.message, 'error'); } finally { btn.classList.remove('loading'); if(spinner) spinner.style.display = 'none'; btn.disabled = !transcript; } }
+  function renderNotes(data) { const decisions = Array.isArray(data.decisions) ? data.decisions : []; const actions = Array.isArray(data.actions) ? data.actions : []; document.getElementById('notesContent').innerHTML = `<div class="notes-grid"><div class="notes-block full-width"><div class="notes-block-label">📌 Executive Summary</div><div class="notes-summary">${escHtml(data.summary || 'No summary available.')}</div></div><div class="notes-block"><div class="notes-block-label">⚡ Key Decisions</div>${decisions.length ? `<ul class="notes-list">${decisions.map(d => `<li>${escHtml(d)}</li>`).join('')}</ul>` : `<p style="font-size:13px;color:var(--text-secondary)">No decisions recorded</p>`}</div><div class="notes-block"><div class="notes-block-label">✅ Action Items</div>${actions.length ? `<ul class="notes-list">${actions.map(a => `<li>${escHtml(a)}</li>`).join('')}</ul>` : `<p style="font-size:13px;color:var(--text-secondary)">No action items recorded</p>`}</div></div>`; }
+  function escHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function exportFile(format) { if (!appState.notes) return; const { summary, decisions, actions } = appState.notes; const now = new Date(); const dateStr = now.toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' }); const timeStr = now.toLocaleTimeString('en-IE', { hour:'2-digit', minute:'2-digit' }); let content = ''; if (format === 'md') { content = `# Meeting Notes (NoteFlow AI)\n**Date:** ${dateStr} at ${timeStr}\n\n## Summary\n${summary}\n\n## Key Decisions\n${(decisions || []).map(d => `- ${d}`).join('\n')}\n\n## Action Items\n${(actions || []).map(a => `- ${a}`).join('\n')}\n\n## Full Transcript\n${appState.transcript}`; } else { content = `MEETING NOTES — NoteFlow\nDate: ${dateStr} at ${timeStr}\n\nSUMMARY\n${summary}\n\nKEY DECISIONS\n${(decisions || []).map((d,i) => `${i+1}. ${d}`).join('\n')}\n\nACTION ITEMS\n${(actions || []).map((a,i) => `${i+1}. ${a}`).join('\n')}\n\nFULL TRANSCRIPT\n${appState.transcript}`; } const blob = new Blob([content], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `meeting-notes-${now.toISOString().slice(0,10)}.${format}`; a.click(); URL.revokeObjectURL(url); toast(`Exported as .${format}`, 'success'); }
+  checkStatus();
+
+  // SCROLL REVEAL & CURSOR ENHANCEMENTS
+  const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('revealed'); }); }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
+  document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+  const cursor = document.getElementById('customCursor'); document.addEventListener('mousemove', (e) => { if(window.innerWidth > 760) { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; } }); document.addEventListener('mousedown', () => { cursor.style.transform = 'translate(-50%, -50%) scale(1.5)'; cursor.style.background = 'var(--accent)'; setTimeout(() => cursor.style.transform = 'translate(-50%, -50%) scale(1)', 200); }); document.addEventListener('mouseup', () => { cursor.style.transform = 'translate(-50%, -50%) scale(1)'; });
+  document.querySelectorAll('button, .btn-record, .btn-action, .btn-export').forEach(btn => { btn.addEventListener('mouseenter', () => { cursor.style.width = '28px'; cursor.style.height = '28px'; cursor.style.background = 'rgba(99,102,241,0.6)'; }); btn.addEventListener('mouseleave', () => { cursor.style.width = '8px'; cursor.style.height = '8px'; cursor.style.background = 'var(--accent)'; }); });
+  window.addEventListener('load', () => { setTimeout(() => { document.querySelectorAll('.scroll-reveal').forEach(el => { if(el.getBoundingClientRect().top < window.innerHeight) el.classList.add('revealed'); }); }, 100); });
+</script>
+</body>
+</html>
